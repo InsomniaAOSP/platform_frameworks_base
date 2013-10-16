@@ -40,13 +40,13 @@ import android.view.WindowManager;
 
 import junit.framework.Assert;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.URLEncoder;
+import java.nio.charset.Charsets;
 import java.security.PrivateKey;
-import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,8 +55,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.android.org.conscrypt.OpenSSLKey;
-import com.android.org.conscrypt.OpenSSLKeyHolder;
+import org.apache.harmony.security.provider.cert.X509CertImpl;
+import org.apache.harmony.xnet.provider.jsse.OpenSSLKey;
+import org.apache.harmony.xnet.provider.jsse.OpenSSLKeyHolder;
 
 class BrowserFrame extends Handler {
 
@@ -69,6 +70,7 @@ class BrowserFrame extends Handler {
      * request's LoadListener
      */
     private final static int MAX_OUTSTANDING_REQUESTS = 300;
+    private final static String SCHEME_HOST_DELIMITER = "://";
 
     private final CallbackProxy mCallbackProxy;
     private final WebSettingsClassic mSettings;
@@ -497,10 +499,15 @@ class BrowserFrame extends Handler {
                             .getCurrentItem();
                     if (item != null) {
                         WebAddress uri = new WebAddress(item.getUrl());
-                        String schemePlusHost = uri.getScheme() + uri.getHost();
+                        String schemePlusHost = uri.getScheme() + SCHEME_HOST_DELIMITER +
+                                uri.getHost();
                         String[] up =
                                 WebViewDatabaseClassic.getInstance(mContext)
                                         .getUsernamePassword(schemePlusHost);
+                        if (up == null) { // no row found, try again using the legacy method
+                            schemePlusHost = uri.getScheme() + uri.getHost();
+                            up = mDatabase.getUsernamePassword(schemePlusHost);
+                        }
                         if (up != null && up[0] != null) {
                             setUsernamePassword(up[0], up[1]);
                         }
@@ -818,7 +825,7 @@ class BrowserFrame extends Handler {
             }
             WebAddress uri = new WebAddress(mCallbackProxy
                     .getBackForwardList().getCurrentItem().getUrl());
-            String schemePlusHost = uri.getScheme() + uri.getHost();
+            String schemePlusHost = uri.getScheme() + SCHEME_HOST_DELIMITER + uri.getHost();
             // Check to see if the username & password appear in
             // the post data (there could be another form on the
             // page and that was posted instead.
@@ -1080,12 +1087,10 @@ class BrowserFrame extends Handler {
             String url) {
         final SslError sslError;
         try {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate cert = (X509Certificate) cf.generateCertificate(
-                    new ByteArrayInputStream(certDER));
+            X509Certificate cert = new X509CertImpl(certDER);
             SslCertificate sslCert = new SslCertificate(cert);
             sslError = SslError.SslErrorFromChromiumErrorCode(certError, sslCert, url);
-        } catch (Exception e) {
+        } catch (IOException e) {
             // Can't get the certificate, not much to do.
             Log.e(LOGTAG, "Can't get the certificate from WebKit, canceling");
             nativeSslCertErrorCancel(handle, certError);
@@ -1203,11 +1208,9 @@ class BrowserFrame extends Handler {
      */
     private void setCertificate(byte cert_der[]) {
         try {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate cert = (X509Certificate) cf.generateCertificate(
-                    new ByteArrayInputStream(cert_der));
+            X509Certificate cert = new X509CertImpl(cert_der);
             mCallbackProxy.onReceivedCertificate(new SslCertificate(cert));
-        } catch (Exception e) {
+        } catch (IOException e) {
             // Can't get the certificate, not much to do.
             Log.e(LOGTAG, "Can't get the certificate from WebKit, canceling");
             return;

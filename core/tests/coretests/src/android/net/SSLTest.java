@@ -49,35 +49,35 @@ public class SSLTest extends TestCase {
         // System.out.println(new String(b));
     }
 
-    public void testStringsToLengthPrefixedBytes() {
+    public void testStringsToNpnBytes() {
         byte[] expected = {
                 6, 's', 'p', 'd', 'y', '/', '2',
                 8, 'h', 't', 't', 'p', '/', '1', '.', '1',
         };
-        assertTrue(Arrays.equals(expected, SSLCertificateSocketFactory.toLengthPrefixedList(
+        assertTrue(Arrays.equals(expected, SSLCertificateSocketFactory.toNpnProtocolsList(
                 new byte[] { 's', 'p', 'd', 'y', '/', '2' },
                 new byte[] { 'h', 't', 't', 'p', '/', '1', '.', '1' })));
     }
 
-    public void testStringsToLengthPrefixedBytesEmptyArray() {
+    public void testStringsToNpnBytesEmptyArray() {
         try {
-            SSLCertificateSocketFactory.toLengthPrefixedList();
+            SSLCertificateSocketFactory.toNpnProtocolsList();
             fail();
         } catch (IllegalArgumentException expected) {
         }
     }
 
-    public void testStringsToLengthPrefixedBytesEmptyByteArray() {
+    public void testStringsToNpnBytesEmptyByteArray() {
         try {
-            SSLCertificateSocketFactory.toLengthPrefixedList(new byte[0]);
+            SSLCertificateSocketFactory.toNpnProtocolsList(new byte[0]);
             fail();
         } catch (IllegalArgumentException expected) {
         }
     }
 
-    public void testStringsToLengthPrefixedBytesOversizedInput() {
+    public void testStringsToNpnBytesOversizedInput() {
         try {
-            SSLCertificateSocketFactory.toLengthPrefixedList(new byte[256]);
+            SSLCertificateSocketFactory.toNpnProtocolsList(new byte[256]);
             fail();
         } catch (IllegalArgumentException expected) {
         }

@@ -193,8 +193,8 @@ public class AppOpsManager {
             android.Manifest.permission.WRITE_CALL_LOG,
             android.Manifest.permission.READ_CALENDAR,
             android.Manifest.permission.WRITE_CALENDAR,
-            android.Manifest.permission.ACCESS_WIFI_STATE,
             null, // no permission required for notifications
+            android.Manifest.permission.ACCESS_WIFI_STATE,
             null, // neighboring cells shares the coarse location perm
             android.Manifest.permission.CALL_PHONE,
             android.Manifest.permission.READ_SMS,
@@ -418,6 +418,14 @@ public class AppOpsManager {
     public void setMode(int code, int uid, String packageName, int mode) {
         try {
             mService.setMode(code, uid, packageName, mode);
+        } catch (RemoteException e) {
+        }
+    }
+
+    /** @hide */
+    public void resetAllModes() {
+        try {
+            mService.resetAllModes();
         } catch (RemoteException e) {
         }
     }

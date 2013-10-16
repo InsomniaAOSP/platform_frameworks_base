@@ -901,8 +901,6 @@ public abstract class PreferenceActivity extends ListActivity implements
 
     @Override
     protected void onDestroy() {
-        mHandler.removeMessages(MSG_BIND_PREFERENCES);
-        mHandler.removeMessages(MSG_BUILD_HEADERS);
         super.onDestroy();
 
         if (mPreferenceManager != null) {

@@ -244,8 +244,7 @@ public interface IKeystoreService extends IInterface {
                 return _result;
             }
 
-            public int generate(String name, int uid, int keyType, int keySize, int flags,
-                    byte[][] args) throws RemoteException {
+            public int generate(String name, int uid, int flags) throws RemoteException {
                 Parcel _data = Parcel.obtain();
                 Parcel _reply = Parcel.obtain();
                 int _result;
@@ -253,17 +252,7 @@ public interface IKeystoreService extends IInterface {
                     _data.writeInterfaceToken(DESCRIPTOR);
                     _data.writeString(name);
                     _data.writeInt(uid);
-                    _data.writeInt(keyType);
-                    _data.writeInt(keySize);
                     _data.writeInt(flags);
-                    if (args == null) {
-                        _data.writeInt(0);
-                    } else {
-                        _data.writeInt(args.length);
-                        for (int i = 0; i < args.length; i++) {
-                            _data.writeByteArray(args[i]);
-                        }
-                    }
                     mRemote.transact(Stub.TRANSACTION_generate, _data, _reply, 0);
                     _reply.readException();
                     _result = _reply.readInt();
@@ -444,13 +433,12 @@ public interface IKeystoreService extends IInterface {
             }
 
             @Override
-            public int is_hardware_backed(String keyType) throws RemoteException {
+            public int is_hardware_backed() throws RemoteException {
                 Parcel _data = Parcel.obtain();
                 Parcel _reply = Parcel.obtain();
                 int _result;
                 try {
                     _data.writeInterfaceToken(DESCRIPTOR);
-                    _data.writeString(keyType);
                     mRemote.transact(Stub.TRANSACTION_is_hardware_backed, _data, _reply, 0);
                     _reply.readException();
                     _result = _reply.readInt();
@@ -572,8 +560,7 @@ public interface IKeystoreService extends IInterface {
 
     public int zero() throws RemoteException;
 
-    public int generate(String name, int uid, int keyType, int keySize, int flags, byte[][] args)
-            throws RemoteException;
+    public int generate(String name, int uid, int flags) throws RemoteException;
 
     public int import_key(String name, byte[] data, int uid, int flags) throws RemoteException;
 
@@ -594,7 +581,7 @@ public interface IKeystoreService extends IInterface {
     public int duplicate(String srcKey, int srcUid, String destKey, int destUid)
             throws RemoteException;
 
-    public int is_hardware_backed(String string) throws RemoteException;
+    public int is_hardware_backed() throws RemoteException;
 
     public int clear_uid(long uid) throws RemoteException;
 }

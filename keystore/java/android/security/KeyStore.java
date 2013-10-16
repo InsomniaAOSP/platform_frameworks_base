@@ -16,13 +16,9 @@
 
 package android.security;
 
-import com.android.org.conscrypt.NativeCrypto;
-
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.util.Log;
-
-import java.util.Locale;
 
 /**
  * @hide This should not be made public in its present form because it
@@ -66,18 +62,6 @@ public class KeyStore {
         IKeystoreService keystore = IKeystoreService.Stub.asInterface(ServiceManager
                 .getService("android.security.keystore"));
         return new KeyStore(keystore);
-    }
-
-    static int getKeyTypeForAlgorithm(String keyType) throws IllegalArgumentException {
-        if ("RSA".equalsIgnoreCase(keyType)) {
-            return NativeCrypto.EVP_PKEY_RSA;
-        } else if ("DSA".equalsIgnoreCase(keyType)) {
-            return NativeCrypto.EVP_PKEY_DSA;
-        } else if ("EC".equalsIgnoreCase(keyType)) {
-            return NativeCrypto.EVP_PKEY_EC;
-        } else {
-            throw new IllegalArgumentException("Unsupported key type: " + keyType);
-        }
     }
 
     public State state() {
@@ -204,10 +188,9 @@ public class KeyStore {
         }
     }
 
-    public boolean generate(String key, int uid, int keyType, int keySize, int flags,
-            byte[][] args) {
+    public boolean generate(String key, int uid, int flags) {
         try {
-            return mBinder.generate(key, uid, keyType, keySize, flags, args) == NO_ERROR;
+            return mBinder.generate(key, uid, flags) == NO_ERROR;
         } catch (RemoteException e) {
             Log.w(TAG, "Cannot connect to keystore", e);
             return false;
@@ -308,14 +291,9 @@ public class KeyStore {
         }
     }
 
-    // TODO remove this when it's removed from Settings
     public boolean isHardwareBacked() {
-        return isHardwareBacked("RSA");
-    }
-
-    public boolean isHardwareBacked(String keyType) {
         try {
-            return mBinder.is_hardware_backed(keyType.toUpperCase(Locale.US)) == NO_ERROR;
+            return mBinder.is_hardware_backed() == NO_ERROR;
         } catch (RemoteException e) {
             Log.w(TAG, "Cannot connect to keystore", e);
             return false;

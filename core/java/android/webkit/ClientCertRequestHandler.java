@@ -20,8 +20,9 @@ import android.os.Handler;
 import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import com.android.org.conscrypt.OpenSSLKey;
-import com.android.org.conscrypt.OpenSSLKeyHolder;
+import org.apache.harmony.xnet.provider.jsse.NativeCrypto;
+import org.apache.harmony.xnet.provider.jsse.OpenSSLKey;
+import org.apache.harmony.xnet.provider.jsse.OpenSSLKeyHolder;
 
 /**
  * ClientCertRequestHandler: class responsible for handling client
@@ -47,21 +48,12 @@ public final class ClientCertRequestHandler extends Handler {
         mTable = table;
     }
 
-    private static byte[][] encodeCertificates(X509Certificate[] certificates)
-            throws CertificateEncodingException {
-        byte[][] certificateBytes = new byte[certificates.length][];
-        for (int i = 0; i < certificates.length; i++) {
-            certificateBytes[i] = certificates[i].getEncoded();
-        }
-        return certificateBytes;
-    }
-
     /**
      * Proceed with the specified private key and client certificate chain.
      */
     public void proceed(PrivateKey privateKey, X509Certificate[] chain) {
         try {
-            byte[][] chainBytes = encodeCertificates(chain);
+            byte[][] chainBytes = NativeCrypto.encodeCertificates(chain);
             mTable.Allow(mHostAndPort, privateKey, chainBytes);
 
             if (privateKey instanceof OpenSSLKeyHolder) {

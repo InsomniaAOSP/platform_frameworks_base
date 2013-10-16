@@ -34,12 +34,11 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.android.org.conscrypt.OpenSSLEngine;
-import com.android.org.conscrypt.TrustedCertificateStore;
+import org.apache.harmony.xnet.provider.jsse.OpenSSLEngine;
+import org.apache.harmony.xnet.provider.jsse.TrustedCertificateStore;
 
 /**
  * The {@code KeyChain} class provides access to private keys and
@@ -347,8 +346,6 @@ public final class KeyChain {
             List<X509Certificate> chain = store
                     .getCertificateChain(toCertificate(certificateBytes));
             return chain.toArray(new X509Certificate[chain.size()]);
-        } catch (CertificateException e) {
-            throw new KeyChainException(e);
         } catch (RemoteException e) {
             throw new KeyChainException(e);
         } catch (RuntimeException e) {
@@ -365,8 +362,7 @@ public final class KeyChain {
      * "RSA").
      */
     public static boolean isKeyAlgorithmSupported(String algorithm) {
-        final String algUpper = algorithm.toUpperCase(Locale.US);
-        return "DSA".equals(algUpper) || "EC".equals(algUpper) || "RSA".equals(algUpper);
+        return "RSA".equals(algorithm);
     }
 
     /**
@@ -381,7 +377,7 @@ public final class KeyChain {
             return false;
         }
 
-        return KeyStore.getInstance().isHardwareBacked(algorithm);
+        return KeyStore.getInstance().isHardwareBacked();
     }
 
     private static X509Certificate toCertificate(byte[] bytes) {

@@ -47,7 +47,6 @@ import com.android.internal.content.PackageHelper;
 import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.telephony.RILConstants;
-import com.android.internal.telephony.cdma.CdmaSubscriptionSourceManager;
 import com.android.internal.util.XmlUtils;
 import com.android.internal.widget.LockPatternUtils;
 import com.android.internal.widget.LockPatternView;
@@ -1430,7 +1429,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     };
                     String[] secureToGlobal = {
                             Settings.Global.PREFERRED_NETWORK_MODE,
-                            Settings.Global.CDMA_SUBSCRIPTION_MODE,
+                            Settings.Global.PREFERRED_CDMA_SUBSCRIPTION,
                     };
 
                     moveSettingsToNewTable(db, TABLE_SYSTEM, TABLE_GLOBAL, systemToGlobal, true);
@@ -2240,18 +2239,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             // Set default cdma call auto retry
             loadSetting(stmt, Settings.Global.CALL_AUTO_RETRY, 0);
 
-            // Set the preferred network mode to target desired value or Default
-            // value defined in RILConstants
+            // Set the preferred network mode to 0 = Global, CDMA default
             int type;
-            type = SystemProperties.getInt("ro.telephony.default_network",
+                type = SystemProperties.getInt("ro.telephony.default_network",
                         RILConstants.PREFERRED_NETWORK_MODE);
             loadSetting(stmt, Settings.Global.PREFERRED_NETWORK_MODE, type);
-
-            // Set the preferred cdma subscription source to target desired value or default
-            // value defined in CdmaSubscriptionSourceManager
-            type = SystemProperties.getInt("ro.telephony.default_cdma_sub",
-                        CdmaSubscriptionSourceManager.PREFERRED_CDMA_SUBSCRIPTION);
-            loadSetting(stmt, Settings.Global.CDMA_SUBSCRIPTION_MODE, type);
 
             // --- New global settings start here
         } finally {

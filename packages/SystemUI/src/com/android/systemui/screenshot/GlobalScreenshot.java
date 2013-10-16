@@ -61,7 +61,6 @@ import com.android.systemui.R;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -212,7 +211,8 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
             values.put(MediaStore.Images.ImageColumns.HEIGHT, mImageHeight);
             Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
-            String subjectDate = DateFormat.getDateTimeInstance().format(new Date(mImageTime));
+            String subjectDate = new SimpleDateFormat("hh:mma, MMM dd, yyyy")
+                .format(new Date(mImageTime));
             String subject = String.format(SCREENSHOT_SHARE_SUBJECT_TEMPLATE, subjectDate);
             Intent sharingIntent = new Intent(Intent.ACTION_SEND);
             sharingIntent.setType("image/png");

@@ -934,9 +934,6 @@ bool AaptGroupEntry::getMncName(const char* name,
 
     if (out) {
         out->mnc = atoi(val);
-        if (out->mnc == 0) {
-            out->mnc = ACONFIGURATION_MNC_ZERO;
-        }
     }
 
     return true;

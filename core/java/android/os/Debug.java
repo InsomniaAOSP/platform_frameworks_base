@@ -518,19 +518,16 @@ href="{@docRoot}guide/developing/tools/traceview.html">Traceview: A Graphical Lo
      *
      * @hide
      */
-    public static void startMethodTracingDdms(int bufferSize, int flags,
-        boolean samplingEnabled, int intervalUs) {
-        VMDebug.startMethodTracingDdms(bufferSize, flags, samplingEnabled, intervalUs);
+    public static void startMethodTracingDdms(int bufferSize, int flags) {
+        VMDebug.startMethodTracingDdms(bufferSize, flags);
     }
 
     /**
-     * Determine whether method tracing is currently active and what type is
-     * active.
-     *
+     * Determine whether method tracing is currently active.
      * @hide
      */
-    public static int getMethodTracingMode() {
-        return VMDebug.getMethodTracingMode();
+    public static boolean isMethodTracingActive() {
+        return VMDebug.isMethodTracingActive();
     }
 
     /**

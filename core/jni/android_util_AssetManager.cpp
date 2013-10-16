@@ -293,10 +293,17 @@ static jobjectArray android_content_AssetManager_list(JNIEnv* env, jobject clazz
         return NULL;
     }
 
+    jclass cls = env->FindClass("java/lang/String");
+    LOG_FATAL_IF(cls == NULL, "No string class?!?");
+    if (cls == NULL) {
+        delete dir;
+        return NULL;
+    }
+
     size_t N = dir->getFileCount();
 
     jobjectArray array = env->NewObjectArray(dir->getFileCount(),
-                                                g_stringClass, NULL);
+                                                cls, NULL);
     if (array == NULL) {
         delete dir;
         return NULL;
@@ -1452,13 +1459,19 @@ static jobjectArray android_content_AssetManager_getArrayStringResource(JNIEnv* 
     }
     const ResTable& res(am->getResources());
 
+    jclass cls = env->FindClass("java/lang/String");
+    LOG_FATAL_IF(cls == NULL, "No string class?!?");
+    if (cls == NULL) {
+        return NULL;
+    }
+
     const ResTable::bag_entry* startOfBag;
     const ssize_t N = res.lockBag(arrayResId, &startOfBag);
     if (N < 0) {
         return NULL;
     }
 
-    jobjectArray array = env->NewObjectArray(N, g_stringClass, NULL);
+    jobjectArray array = env->NewObjectArray(N, cls, NULL);
     if (env->ExceptionCheck()) {
         res.unlockBag(startOfBag);
         return NULL;
@@ -1755,7 +1768,6 @@ int register_android_content_AssetManager(JNIEnv* env)
     jclass stringClass = env->FindClass("java/lang/String");
     LOG_FATAL_IF(stringClass == NULL, "Unable to find class java/lang/String");
     g_stringClass = (jclass)env->NewGlobalRef(stringClass);
-    LOG_FATAL_IF(g_stringClass == NULL, "Unable to create global reference for class java/lang/String");
 
     return AndroidRuntime::registerNativeMethods(env,
             "android/content/res/AssetManager", gAssetManagerMethods, NELEM(gAssetManagerMethods));
