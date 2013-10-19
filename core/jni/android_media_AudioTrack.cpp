@@ -63,6 +63,8 @@ struct fields_t {
     int       STREAM_NOTIFICATION;   //...  stream type constants
     int       STREAM_BLUETOOTH_SCO;  //...  stream type constants
     int       STREAM_DTMF;           //...  stream type constants
+    int       MODE_STREAM;           //...  memory mode
+    int       MODE_STATIC;           //...  memory mode
     jfieldID  nativeTrackInJavaObj;  // stores in Java the native AudioTrack object
     jfieldID  jniData;      // stores in Java additional resources used by the native AudioTrack
 };
@@ -275,9 +277,6 @@ android_media_AudioTrack_native_setup(JNIEnv *env, jobject thiz, jobject weak_th
     case AUDIO_STREAM_NOTIFICATION:
     case AUDIO_STREAM_BLUETOOTH_SCO:
     case AUDIO_STREAM_DTMF:
-#ifdef QCOM_HARDWARE
-    case AUDIO_STREAM_INCALL_MUSIC:
-#endif
         atStreamType = (audio_stream_type_t) streamType;
         break;
     default:
@@ -837,9 +836,6 @@ static jint android_media_AudioTrack_get_output_sample_rate(JNIEnv *env,  jobjec
     case AUDIO_STREAM_NOTIFICATION:
     case AUDIO_STREAM_BLUETOOTH_SCO:
     case AUDIO_STREAM_DTMF:
-#ifdef QCOM_HARDWARE
-    case AUDIO_STREAM_INCALL_MUSIC:
-#endif
         nativeStreamType = (audio_stream_type_t) javaStreamType;
         break;
     default:

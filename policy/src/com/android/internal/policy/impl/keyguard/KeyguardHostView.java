@@ -33,8 +33,11 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.UserInfo;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.RemoteControlClient;
 import android.os.Looper;
 import android.os.Parcel;
@@ -42,7 +45,6 @@ import android.os.Parcelable;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.provider.Settings;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -379,6 +381,7 @@ public class KeyguardHostView extends KeyguardViewBase {
         setBackButtonEnabled(false);
 
         addDefaultWidgets();
+        updateBackground();
 
         addWidgetsFromSettings();
         if (!shouldEnableAddWidget()) {
@@ -402,6 +405,29 @@ public class KeyguardHostView extends KeyguardViewBase {
 
     private boolean shouldEnableAddWidget() {
         return numWidgets() < MAX_WIDGETS && mUserSetupCompleted;
+    }
+
+    private void updateBackground() {
+        int background = Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.LOCKSCREEN_BACKGROUND, -1, UserHandle.USER_CURRENT);
+        if (background == -1 || background == -3) {
+            return;
+        } else if (background == -2) {
+            try {
+                Context settingsContext = getContext().createPackageContext("com.evervolv.toolbox", 0);
+                String wallpaperFile = settingsContext.getFilesDir() + "/lock_wallpaper";
+                Bitmap backgroundBitmap = BitmapFactory.decodeFile(wallpaperFile);
+                setBackground(new BitmapDrawable(getContext().getResources(), backgroundBitmap));
+            } catch (NameNotFoundException e) {
+                Log.e(TAG, "Lockscreen background not found.");
+            }
+        } else {
+            try {
+                setBackgroundColor(background);
+            } catch(NumberFormatException e) {
+                Log.e(TAG, "Invalid background color " + background);
+            }
+        }
     }
 
     private int getDisabledFeatures(DevicePolicyManager dpm) {
@@ -1625,13 +1651,7 @@ public class KeyguardHostView extends KeyguardViewBase {
                 com.android.internal.R.bool.config_disableMenuKeyInLockScreen);
         final boolean isTestHarness = ActivityManager.isRunningInTestHarness();
         final boolean fileOverride = (new File(ENABLE_MENU_KEY_FILE)).exists();
-        final boolean menuOverride = Settings.System.getInt(getContext().getContentResolver(), Settings.System.MENU_UNLOCK_SCREEN, 0) == 1;
-        return !configDisabled || isTestHarness || fileOverride || menuOverride;
-    }
-
-    private boolean shouldEnableHomeKey() {
-        final boolean homeOverride = Settings.System.getInt(getContext().getContentResolver(), Settings.System.HOME_UNLOCK_SCREEN, 0) == 1;
-        return homeOverride;
+        return !configDisabled || isTestHarness || fileOverride;
     }
 
     public void goToUserSwitcher() {
@@ -1646,15 +1666,6 @@ public class KeyguardHostView extends KeyguardViewBase {
     public boolean handleMenuKey() {
         // The following enables the MENU key to work for testing automation
         if (shouldEnableMenuKey()) {
-            showNextSecurityScreenOrFinish(false);
-            return true;
-        }
-        return false;
-    }
-    
-    public boolean handleHomeKey() {
-        // The following enables the HOME key to work for testing automation
-        if (shouldEnableHomeKey()) {
             showNextSecurityScreenOrFinish(false);
             return true;
         }

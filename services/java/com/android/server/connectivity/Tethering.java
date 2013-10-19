@@ -48,6 +48,7 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Log;
 
+import com.android.internal.app.ThemeUtils;
 import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.util.IState;
@@ -75,6 +76,7 @@ import java.util.Set;
 public class Tethering extends INetworkManagementEventObserver.Stub {
 
     private Context mContext;
+    private Context mUiContext;
     private final static String TAG = "Tethering";
     private final static boolean DBG = true;
     private final static boolean VDBG = false;
@@ -160,6 +162,13 @@ public class Tethering extends INetworkManagementEventObserver.Stub {
         filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
         mContext.registerReceiver(mStateReceiver, filter);
 
+        ThemeUtils.registerThemeChangeReceiver(mContext, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context content, Intent intent) {
+                mUiContext = null;
+            }
+        });
+
         filter = new IntentFilter();
         filter.addAction(Intent.ACTION_MEDIA_SHARED);
         filter.addAction(Intent.ACTION_MEDIA_UNSHARED);
@@ -192,22 +201,8 @@ public class Tethering extends INetworkManagementEventObserver.Stub {
         int ifaceTypes[] = mContext.getResources().getIntArray(
                 com.android.internal.R.array.config_tether_upstream_types);
         Collection<Integer> upstreamIfaceTypes = new ArrayList();
-        IBinder b = ServiceManager.getService(Context.CONNECTIVITY_SERVICE);
-        IConnectivityManager cm = IConnectivityManager.Stub.asInterface(b);
-        try {
-            int activeNetType = cm.getActiveNetworkInfo().getType();
-            for (int i : ifaceTypes) {
-                if(i == activeNetType) {
-                    upstreamIfaceTypes.add(new Integer(i));
-                }
-            }
-        } catch (Exception e) {
-            Log.d(TAG, "Exception adding default nw to upstreamIfaceTypes: " + e);
-        }
         for (int i : ifaceTypes) {
-            if(!upstreamIfaceTypes.contains(new Integer(i))) {
-                upstreamIfaceTypes.add(new Integer(i));
-            }
+            upstreamIfaceTypes.add(new Integer(i));
         }
 
         synchronized (mPublicSync) {
@@ -494,10 +489,17 @@ public class Tethering extends INetworkManagementEventObserver.Stub {
         mTetheredNotification.defaults &= ~Notification.DEFAULT_SOUND;
         mTetheredNotification.flags = Notification.FLAG_ONGOING_EVENT;
         mTetheredNotification.tickerText = title;
-        mTetheredNotification.setLatestEventInfo(mContext, title, message, pi);
+        mTetheredNotification.setLatestEventInfo(getUiContext(), title, message, pi);
 
         notificationManager.notifyAsUser(null, mTetheredNotification.icon,
                 mTetheredNotification, UserHandle.ALL);
+    }
+
+    private Context getUiContext() {
+        if (mUiContext == null) {
+            mUiContext = ThemeUtils.createUiContext(mContext);
+        }
+        return mUiContext != null ? mUiContext : mContext;
     }
 
     private void clearTetheredNotification() {

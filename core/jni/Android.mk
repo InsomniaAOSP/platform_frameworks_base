@@ -83,6 +83,7 @@ LOCAL_SRC_FILES:= \
 	android_util_Process.cpp \
 	android_util_StringBlock.cpp \
 	android_util_XmlBlock.cpp \
+	android_util_PackageRedirectionMap.cpp \
 	android/graphics/AutoDecodeCancel.cpp \
 	android/graphics/BitmapFactory.cpp \
 	android/graphics/Camera.cpp \
@@ -148,12 +149,6 @@ LOCAL_SRC_FILES:= \
 	android_animation_PropertyValuesHolder.cpp \
 	com_android_internal_net_NetworkStatsFactory.cpp
 
-ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
-    LOCAL_CFLAGS += -DQCOM_HARDWARE
-    LOCAL_SRC_FILES += \
-	    com_android_internal_app_ActivityTrigger.cpp
-endif
-
 LOCAL_C_INCLUDES += \
 	$(JNI_H_INCLUDE) \
 	$(LOCAL_PATH)/android/graphics \
@@ -218,7 +213,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libz
 
 ifeq ($(TARGET_ARCH), arm)
-  ifeq ($(ARCH_ARM_HAVE_NEON),true)
+  ifeq ($(strip $(TARGET_CPU_VARIANT)), krait)
     TARGET_arm_CFLAGS += -DUSE_NEON_BITMAP_OPTS -mvectorize-with-neon-quad
     LOCAL_SRC_FILES+= \
 		android/graphics/Bitmap.cpp.arm

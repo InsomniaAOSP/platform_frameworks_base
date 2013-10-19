@@ -420,7 +420,7 @@ public interface WindowManagerPolicy {
 
         public void shutdown(boolean confirm);
         public void rebootSafeMode(boolean confirm);
-        public void reboot();
+        public void reboot(String reason);
     }
 
     /** Window has been added to the screen. */
@@ -1123,12 +1123,6 @@ public interface WindowManagerPolicy {
      * Specifies whether there is an on-screen navigation bar separate from the status bar.
      */
     public boolean hasNavigationBar();
-
-    /**
-     * Specifies whether the on-screen navigation bar and the status bar are translucent
-     */
-    public boolean isBarTranslucent();
-    public void setBarTranslucentAllowed(boolean allowed);
 
     /**
      * Lock the device now.

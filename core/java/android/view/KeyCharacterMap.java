@@ -134,6 +134,12 @@ public class KeyCharacterMap implements Parcelable {
     public static final char DOT_WWW_INPUT = '\uEF04';
 
     /**
+     * Private use character denoting smiley face
+     * @hide
+     */
+    public static final char SMILEY_DIALOG_INPUT = '\uEF05';
+
+    /**
      * Modifier keys may be chorded with character keys.
      *
      * @see {#link #getModifierBehavior()} for more details.

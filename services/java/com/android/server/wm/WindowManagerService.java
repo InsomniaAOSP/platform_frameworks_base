@@ -46,6 +46,8 @@ import android.app.AppOpsManager;
 import android.util.TimeUtils;
 import android.view.IWindowId;
 import com.android.internal.app.IBatteryStats;
+import com.android.internal.app.ThemeUtils;
+
 import com.android.internal.policy.PolicyManager;
 import com.android.internal.policy.impl.PhoneWindowManager;
 import com.android.internal.view.IInputContext;
@@ -290,6 +292,12 @@ public class WindowManagerService extends IWindowManager.Stub
 
     private final boolean mHeadless;
 
+    private BroadcastReceiver mThemeChangeReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            mUiContext = null;
+        }
+    };
+
     final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -312,6 +320,8 @@ public class WindowManagerService extends IWindowManager.Stub
     final boolean mAllowBootMessages;
 
     final boolean mLimitedAlphaCompositing;
+
+    final boolean mSetLandscapeProperty;
 
     final WindowManagerPolicy mPolicy = PolicyManager.makeNewWindowManager();
 
@@ -563,8 +573,6 @@ public class WindowManagerService extends IWindowManager.Stub
     final DisplayManagerService mDisplayManagerService;
     final DisplayManager mDisplayManager;
 
-    private boolean mForceDisableHardwareKeyboard = false;
-
     // Who is holding the screen on.
     Session mHoldingScreenOn;
     PowerManager.WakeLock mHoldingScreenWakeLock;
@@ -764,6 +772,8 @@ public class WindowManagerService extends IWindowManager.Stub
         mOnlyCore = onlyCore;
         mLimitedAlphaCompositing = context.getResources().getBoolean(
                 com.android.internal.R.bool.config_sf_limitedAlpha);
+        mSetLandscapeProperty = context.getResources().getBoolean(
+                com.android.internal.R.bool.config_setLandscapeProp);
         mDisplayManagerService = displayManager;
         mHeadless = displayManager.isHeadless();
         mDisplaySettings = new DisplaySettings(context);
@@ -819,9 +829,6 @@ public class WindowManagerService extends IWindowManager.Stub
         mFxSession = new SurfaceSession();
         mAnimator = new WindowAnimator(this);
 
-        mForceDisableHardwareKeyboard = context.getResources().getBoolean(
-                com.android.internal.R.bool.config_forceDisableHardwareKeyboard);
-
         initPolicy(uiHandler);
 
         // Add ourself to the Watchdog monitors.
@@ -833,15 +840,20 @@ public class WindowManagerService extends IWindowManager.Stub
         } finally {
             SurfaceControl.closeTransaction();
         }
+
+        ThemeUtils.registerThemeChangeReceiver(mContext, mThemeChangeReceiver);
+    }
+
+    private Context getUiContext() {
+        if (mUiContext == null) {
+            mUiContext = ThemeUtils.createUiContext(mContext);
+        }
+        return mUiContext != null ? mUiContext : mContext;
     }
 
     public InputMonitor getInputMonitor() {
         return mInputMonitor;
     }
-
-    private Context getUiContext() {
-       return mContext;
-   }
 
     @Override
     public boolean onTransact(int code, Parcel data, Parcel reply, int flags)
@@ -4978,13 +4990,19 @@ public class WindowManagerService extends IWindowManager.Stub
     // Called by window manager policy.  Not exposed externally.
     @Override
     public void shutdown(boolean confirm) {
-        ShutdownThread.shutdown(mContext, confirm);
+        ShutdownThread.shutdown(getUiContext(), confirm);
     }
 
     // Called by window manager policy.  Not exposed externally.
     @Override
     public void rebootSafeMode(boolean confirm) {
-        ShutdownThread.rebootSafeMode(mContext, confirm);
+        ShutdownThread.rebootSafeMode(getUiContext(), confirm);
+    }
+
+    // Called by window manager policy.  Not exposed externally.
+    @Override
+    public void reboot(String reason) {
+        ShutdownThread.reboot(getUiContext(),reason, true);
     }
 
     @Override
@@ -4993,12 +5011,6 @@ public class WindowManagerService extends IWindowManager.Stub
             throw new SecurityException("Requires FILTER_EVENTS permission");
         }
         mInputManager.setInputFilter(filter);
-    }
-
-    // Called by window manager policy.  Not exposed externally.
-    @Override
-    public void reboot() {
-        ShutdownThread.reboot(getUiContext(), null, true);
     }
 
     public void setCurrentUser(final int newUserId) {
@@ -5305,6 +5317,12 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public void setStrictModeVisualIndicatorPreference(String value) {
         SystemProperties.set(StrictMode.VISUAL_PROPERTY, value);
+    }
+
+    /** {@hide} */
+    public void setLandscapeProperty(String value) {
+        if (!mSetLandscapeProperty) return;
+        SystemProperties.set("sys.orientation.landscape", value);
     }
 
     /**
@@ -6444,8 +6462,13 @@ public class WindowManagerService extends IWindowManager.Stub
         }
 
         if (config != null) {
-            config.orientation = (dw <= dh) ? Configuration.ORIENTATION_PORTRAIT :
-                    Configuration.ORIENTATION_LANDSCAPE;
+            if (dw <= dh) {
+                config.orientation = Configuration.ORIENTATION_PORTRAIT;
+                setLandscapeProperty("0");
+            } else {
+                config.orientation = Configuration.ORIENTATION_LANDSCAPE;
+                setLandscapeProperty("1");
+            }
         }
 
         // Update application display metrics.
@@ -6528,10 +6551,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
 
             // Determine whether a hard keyboard is available and enabled.
-            boolean hardKeyboardAvailable = false;
-            if (!mForceDisableHardwareKeyboard) {
-                hardKeyboardAvailable = config.keyboard != Configuration.KEYBOARD_NOKEYS;
-            }
+            boolean hardKeyboardAvailable = config.keyboard != Configuration.KEYBOARD_NOKEYS;
             if (hardKeyboardAvailable != mHardKeyboardAvailable) {
                 mHardKeyboardAvailable = hardKeyboardAvailable;
                 mHardKeyboardEnabled = hardKeyboardAvailable;
@@ -9863,16 +9883,6 @@ public class WindowManagerService extends IWindowManager.Stub
     @Override
     public boolean hasNavigationBar() {
         return mPolicy.hasNavigationBar();
-    }
-
-    @Override
-    public boolean isBarTranslucent() {
-        return mPolicy.isBarTranslucent();
-    }
-
-    @Override
-    public void setBarTranslucentAllowed(boolean allowed) {
-        mPolicy.setBarTranslucentAllowed(allowed);
     }
 
     @Override

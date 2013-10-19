@@ -250,6 +250,7 @@
   <java-symbol type="bool" name="config_duplicate_port_omadm_wappush" />
   <java-symbol type="bool" name="config_enable_emergency_call_while_sim_locked" />
   <java-symbol type="bool" name="config_enable_puk_unlock_screen" />
+  <java-symbol type="bool" name="config_hotswapCapable" />
   <java-symbol type="bool" name="config_mms_content_disposition_support" />
   <java-symbol type="bool" name="config_showMenuShortcutsWhenKeyboardPresent" />
   <java-symbol type="bool" name="config_sip_wifi_only" />
@@ -604,7 +605,6 @@
   <java-symbol type="string" name="lockscreen_transport_pause_description" />
   <java-symbol type="string" name="lockscreen_transport_play_description" />
   <java-symbol type="string" name="lockscreen_transport_stop_description" />
-  
   <java-symbol type="string" name="low_memory" />
   <java-symbol type="string" name="media_bad_removal" />
   <java-symbol type="string" name="media_checking" />
@@ -707,7 +707,6 @@
   <java-symbol type="string" name="mobile_provisioning_apn" />
   <java-symbol type="string" name="mobile_provisioning_url" />
   <java-symbol type="string" name="mobile_redirected_provisioning_url" />
-  <java-symbol type="string" name="progress_nomediapresent" />
   <java-symbol type="string" name="reboot_safemode_confirm" />
   <java-symbol type="string" name="reboot_safemode_title" />
   <java-symbol type="string" name="relationTypeAssistant" />
@@ -926,7 +925,6 @@
   <java-symbol type="array" name="config_masterVolumeRamp" />
   <java-symbol type="array" name="config_cdma_dun_supported_types" />
   <java-symbol type="array" name="config_disabledUntilUsedPreinstalledImes" />
-  <java-symbol type="array" name="notification_light_package_mapping" />
 
   <java-symbol type="drawable" name="default_wallpaper" />
   <java-symbol type="drawable" name="indicator_input_error" />
@@ -1250,8 +1248,6 @@
   <java-symbol type="bool" name="config_disableMenuKeyInLockScreen" />
   <java-symbol type="bool" name="config_enableLockBeforeUnlockScreen" />
   <java-symbol type="bool" name="config_enableLockScreenRotation" />
-  <java-symbol type="bool" name="config_forceAnalogCarDock" />
-  <java-symbol type="bool" name="config_forceAnalogDeskDock" />
   <java-symbol type="bool" name="config_lidControlsSleep" />
   <java-symbol type="bool" name="config_reverseDefaultRotation" />
   <java-symbol type="bool" name="config_showNavigationBar" />
@@ -1282,18 +1278,12 @@
   <java-symbol type="dimen" name="kg_edge_swipe_region_size" />
   <java-symbol type="dimen" name="kg_squashed_layout_threshold" />
   <java-symbol type="dimen" name="kg_small_widget_height" />
-  <java-symbol type="dimen" name="lockscreen_target_inset" />
-  <java-symbol type="dimen" name="lockscreen_target_icon_file_inset" />
   <java-symbol type="drawable" name="ic_jog_dial_sound_off" />
   <java-symbol type="drawable" name="ic_jog_dial_sound_on" />
   <java-symbol type="drawable" name="ic_jog_dial_unlock" />
   <java-symbol type="drawable" name="ic_jog_dial_vibrate_on" />
   <java-symbol type="drawable" name="ic_lock_airplane_mode" />
   <java-symbol type="drawable" name="ic_lock_airplane_mode_off" />
-  <java-symbol type="drawable" name="ic_lockscreen_lock_pressed" />
-  <java-symbol type="drawable" name="ic_lockscreen_target_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_unlock_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_unlock_normal" />
   <java-symbol type="drawable" name="ic_menu_cc" />
   <java-symbol type="drawable" name="jog_tab_bar_left_unlock" />
   <java-symbol type="drawable" name="jog_tab_bar_right_sound_off" />
@@ -1560,7 +1550,6 @@
   <java-symbol type="bool" name="config_wifi_background_scan_support" />
   <java-symbol type="bool" name="config_wifi_dual_band_support" />
   <java-symbol type="bool" name="config_wimaxEnabled" />
-  <java-symbol type="bool" name="config_multiColorBatteryLed" />
   <java-symbol type="bool" name="show_ongoing_ime_switcher" />
   <java-symbol type="color" name="config_defaultNotificationColor" />
   <java-symbol type="drawable" name="ic_notification_ime_default" />
@@ -1721,9 +1710,6 @@
   <java-symbol type="string" name="config_dreamsDefaultComponent" />
   <java-symbol type="string" name="enable_explore_by_touch_warning_title" />
   <java-symbol type="string" name="enable_explore_by_touch_warning_message" />
-  <!-- AOKP symbols for service -->
-  <java-symbol type="string" name="notify_turn_wifi_off_title" />
-  <java-symbol type="drawable" name="ic_stat_turn_wifi_off" />
 
   <java-symbol type="layout" name="resolver_grid" />
   <java-symbol type="id" name="resolver_grid" />
@@ -1856,26 +1842,40 @@
   <!-- From Chromium-WebView -->
   <java-symbol type="attr" name="actionModeWebSearchDrawable" />
   <java-symbol type="string" name="websearch" />
-  
-  <!-- Lockscreen -->
-  <java-symbol type="bool" name="config_disableHomeUnlockSetting" />
 
-  <!-- CM -->
-  <java-symbol type="bool" name="config_smsSamsungCdmaAlternateMessageIDEncoding" />
+  <!-- Added by Evervolv -->
+  <java-symbol type="array" name="shutdown_reboot_actions" />
+  <java-symbol type="array" name="shutdown_reboot_options" />
+  <java-symbol type="bool" name="config_wifiApFirmwareReload" />
+  <java-symbol type="bool" name="config_wifiApStartInterface" />
+  <java-symbol type="drawable" name="ic_lock_reboot" />
+  <java-symbol type="drawable" name="ic_lock_screenshot" />
+  <java-symbol type="string" name="global_action_reboot" />
+  <java-symbol type="string" name="global_action_screenshot" />
+  <java-symbol type="string" name="hot_reboot_progress" />
+  <java-symbol type="string" name="hot_reboot_title" />
+  <java-symbol type="string" name="reboot_hot" />
+  <java-symbol type="string" name="reboot_progress" />
+  <java-symbol type="string" name="reboot_system" />
+  <java-symbol type="string" name="config_legacyUmsLunFile" />
+  <java-symbol type="bool" name="config_setLandscapeProp" />
+  <java-symbol type="id" name="sliding_tab_view" />
+  <java-symbol type="id" name="rotary_selector_view" />
+  <java-symbol type="id" name="multiwave_view" />
+  <java-symbol type="drawable" name="ic_lock_ringer_on" />
+  <java-symbol type="drawable" name="ic_lock_ringer_off" />
+  <java-symbol type="color" name="keyguard_text_color_soundon" />
+  <java-symbol type="color" name="keyguard_text_color_soundoff" />
+  <java-symbol type="id" name="carrier_text" />
+  <java-symbol type="drawable" name="ic_lockscreen_chevron_up" />
+  <java-symbol type="drawable" name="ic_lockscreen_chevron_down" />
+  <java-symbol type="drawable" name="ic_lockscreen_chevron_left" />
+  <java-symbol type="drawable" name="ic_lockscreen_chevron_right" />
   <java-symbol type="bool" name="config_samsung_stk" />
+  <java-symbol type="bool" name="config_smsSamsungCdmaAlternateMessageIDEncoding" />
   <java-symbol type="array" name="config_telephony_set_audioparameters" />
 
-  <java-symbol type="drawable" name="ic_lock_reboot" />
-  <java-symbol type="string" name="global_action_reboot" />
-  <java-symbol type="array" name="shutdown_reboot_options" />
-  <java-symbol type="array" name="shutdown_reboot_actions" />
-  <java-symbol type="string" name="reboot_system" />
-
-  <!-- Wifi -->
-  <java-symbol type="bool" name="config_wifiApStartInterface" />
-  <java-symbol type="bool" name="config_wifiApFirmwareReload" />
-
-  <!-- Panel auto brightness -->
-  <java-symbol type="integer" name="config_panelAutoBrightnessValue" />
+  <!-- Irda Service -->
+  <java-symbol type="bool" name="config_enableIrdaManagerService" />
 
 </resources>

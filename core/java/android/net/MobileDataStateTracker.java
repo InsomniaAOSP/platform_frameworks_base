@@ -190,8 +190,6 @@ public class MobileDataStateTracker implements NetworkStateTracker {
     private class MobileDataStateReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // Assume this isn't a provisioning network.
-            mNetworkInfo.setIsConnectedToProvisioningNetwork(false);
             if (intent.getAction().equals(TelephonyIntents.
                     ACTION_DATA_CONNECTION_CONNECTED_TO_PROVISIONING_APN)) {
                 String apnName = intent.getStringExtra(PhoneConstants.DATA_APN_KEY);
@@ -218,6 +216,8 @@ public class MobileDataStateTracker implements NetworkStateTracker {
                 if (!TextUtils.equals(apnType, mApnType)) {
                     return;
                 }
+                // Assume this isn't a provisioning network.
+                mNetworkInfo.setIsConnectedToProvisioningNetwork(false);
                 if (DBG) {
                     log("Broadcast received: " + intent.getAction() + " apnType=" + apnType);
                 }
@@ -299,6 +299,8 @@ public class MobileDataStateTracker implements NetworkStateTracker {
                 if (!TextUtils.equals(apnType, mApnType)) {
                     return;
                 }
+                // Assume this isn't a provisioning network.
+                mNetworkInfo.setIsConnectedToProvisioningNetwork(false);
                 String reason = intent.getStringExtra(PhoneConstants.FAILURE_REASON_KEY);
                 String apnName = intent.getStringExtra(PhoneConstants.DATA_APN_KEY);
                 if (DBG) {
@@ -355,9 +357,6 @@ public class MobileDataStateTracker implements NetworkStateTracker {
         case TelephonyManager.NETWORK_TYPE_HSPAP:
             networkTypeStr = "hspap";
             break;
-        case TelephonyManager.NETWORK_TYPE_DCHSPAP:
-            networkTypeStr = "hspap";
-            break;
         case TelephonyManager.NETWORK_TYPE_CDMA:
             networkTypeStr = "cdma";
             break;
@@ -371,7 +370,7 @@ public class MobileDataStateTracker implements NetworkStateTracker {
             networkTypeStr = "evdo";
             break;
         case TelephonyManager.NETWORK_TYPE_EVDO_B:
-            networkTypeStr = "evdo";
+            networkTypeStr = "evdo_b";
             break;
         case TelephonyManager.NETWORK_TYPE_IDEN:
             networkTypeStr = "iden";

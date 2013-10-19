@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2006-2008 The Android Open Source Project
+ * This code has been modified.  Portions copyright (C) 2010, T-Mobile USA, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +22,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import android.app.AppOpsManager;
 import android.appwidget.AppWidgetManager;
 import com.android.internal.R;
+import com.android.internal.app.ThemeUtils;
 import com.android.internal.os.BatteryStatsImpl;
 import com.android.internal.os.ProcessStats;
 import com.android.server.AppOpsService;
@@ -92,6 +94,7 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
+import android.content.res.CustomTheme;
 import android.graphics.Bitmap;
 import android.net.Proxy;
 import android.net.ProxyProperties;
@@ -165,6 +168,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import dalvik.system.Zygote;
 
 public final class ActivityManagerService  extends ActivityManagerNative
         implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {
@@ -703,6 +707,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
     boolean mLaunchWarningShown = false;
 
     Context mContext;
+    Context mUiContext;
 
     int mFactoryTest;
 
@@ -973,7 +978,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
                         return;
                     }
                     if (mShowDialogs && !mSleeping && !mShuttingDown) {
-                        Dialog d = new AppErrorDialog(mContext,
+                        Dialog d = new AppErrorDialog(getUiContext(),
                                 ActivityManagerService.this, res, proc);
                         d.show();
                         proc.crashDialog = d;
@@ -1008,7 +1013,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
 
                     if (mShowDialogs) {
                         Dialog d = new AppNotRespondingDialog(ActivityManagerService.this,
-                                mContext, proc, (ActivityRecord)data.get("activity"),
+                                getUiContext(), proc, (ActivityRecord)data.get("activity"),
                                 msg.arg1 != 0);
                         d.show();
                         proc.anrDialog = d;
@@ -1034,7 +1039,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
                     }
                     AppErrorResult res = (AppErrorResult) data.get("result");
                     if (mShowDialogs && !mSleeping && !mShuttingDown) {
-                        Dialog d = new StrictModeViolationDialog(mContext,
+                        Dialog d = new StrictModeViolationDialog(getUiContext(),
                                 ActivityManagerService.this, res, proc);
                         d.show();
                         proc.crashDialog = d;
@@ -1048,7 +1053,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
             } break;
             case SHOW_FACTORY_ERROR_MSG: {
                 Dialog d = new FactoryErrorDialog(
-                    mContext, msg.getData().getCharSequence("msg"));
+                    getUiContext(), msg.getData().getCharSequence("msg"));
                 d.show();
                 ensureBootCompleted();
             } break;
@@ -1068,7 +1073,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
                         if (!app.waitedForDebugger) {
                             Dialog d = new AppWaitingForDebuggerDialog(
                                     ActivityManagerService.this,
-                                    mContext, app);
+                                    getUiContext(), app);
                             app.waitDialog = d;
                             app.waitedForDebugger = true;
                             d.show();
@@ -1150,7 +1155,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
                 Log.e(TAG, title + ": " + text);
                 if (mShowDialogs) {
                     // XXX This is a temporary dialog, no need to localize.
-                    AlertDialog d = new BaseErrorDialog(mContext);
+                    AlertDialog d = new BaseErrorDialog(getUiContext());
                     d.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ERROR);
                     d.setCancelable(false);
                     d.setTitle(title);
@@ -1221,7 +1226,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
                     notification.defaults = 0; // please be quiet
                     notification.sound = null;
                     notification.vibrate = null;
-                    notification.setLatestEventInfo(context, text,
+                    notification.setLatestEventInfo(getUiContext(), text,
                             mContext.getText(R.string.heavy_weight_notification_detail),
                             PendingIntent.getActivityAsUser(mContext, 0, root.intent,
                                     PendingIntent.FLAG_CANCEL_CURRENT, null,
@@ -1861,6 +1866,15 @@ public final class ActivityManagerService  extends ActivityManagerNative
         }
     }
 
+    private Context getUiContext() {
+        synchronized (this) {
+            if (mUiContext == null && mBooted) {
+                mUiContext = ThemeUtils.createUiContext(mContext);
+            }
+            return mUiContext != null ? mUiContext : mContext;
+        }
+    }
+
     /**
      * Initialize the application bind args. These are passed to each
      * process when the bindApplication() IPC is sent to the process. They're
@@ -1934,14 +1948,12 @@ public final class ActivityManagerService  extends ActivityManagerNative
             ProcessRecord p = mLruProcesses.get(i);
             // If this app shouldn't be in front of the first N background
             // apps, then skip over that many that are currently hidden.
-            if (p != null && p.thread != null) {
-                if (skipTop > 0 && p.setAdj >= ProcessList.HIDDEN_APP_MIN_ADJ) {
-                    skipTop--;
-                }
-                if (p.lruWeight <= app.lruWeight || i < bestPos) {
-                    mLruProcesses.add(i+1, app);
-                    break;
-                }
+            if (skipTop > 0 && p.setAdj >= ProcessList.HIDDEN_APP_MIN_ADJ) {
+                skipTop--;
+            }
+            if (p.lruWeight <= app.lruWeight || i < bestPos) {
+                mLruProcesses.add(i+1, app);
+                break;
             }
             i--;
         }
@@ -3463,24 +3475,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
                     activity != null ? activity.shortComponentName : null,
                     annotation != null ? "ANR " + annotation : "ANR",
                     info.toString());
-
-            String tracesPath = SystemProperties.get("dalvik.vm.stack-trace-file", null);
-            if (tracesPath != null && tracesPath.length() != 0) {
-                File traceRenameFile = new File(tracesPath);
-                String newTracesPath;
-                int lpos = tracesPath.lastIndexOf (".");
-                if (-1 != lpos)
-                    newTracesPath = tracesPath.substring (0, lpos) + "_" + app.processName + tracesPath.substring (lpos);
-                else
-                    newTracesPath = tracesPath + "_" + app.processName;
-                traceRenameFile.renameTo(new File(newTracesPath));
-
-                Process.sendSignal(app.pid, 6);
-                SystemClock.sleep(1000);
-                Process.sendSignal(app.pid, 6);
-                SystemClock.sleep(1000);
-            }
-
+    
             // Bring up the infamous App Not Responding dialog
             Message msg = Message.obtain();
             HashMap map = new HashMap();
@@ -3503,7 +3498,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
                 @Override
                 public void run() {
                     synchronized (ActivityManagerService.this) {
-                        final Dialog d = new LaunchWarningWindow(mContext, cur, next);
+                        final Dialog d = new LaunchWarningWindow(getUiContext(), cur, next);
                         d.show();
                         mHandler.postDelayed(new Runnable() {
                             @Override
@@ -4497,6 +4492,13 @@ public final class ActivityManagerService  extends ActivityManagerNative
             }
         }, pkgFilter);
 
+        ThemeUtils.registerThemeChangeReceiver(mContext, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mUiContext = null;
+            }
+        });
+        
         synchronized (this) {
             // Ensure that any processes we had put on hold are now started
             // up.
@@ -7461,10 +7463,6 @@ public final class ActivityManagerService  extends ActivityManagerNative
     public void setActivityController(IActivityController controller) {
         enforceCallingPermission(android.Manifest.permission.SET_ACTIVITY_WATCHER,
                 "setActivityController()");
-
-        int pid = controller == null ? 0 : Binder.getCallingPid();
-        Watchdog.getInstance().processStarted("ActivityController", pid);
-
         synchronized (this) {
             mController = controller;
             Watchdog.getInstance().setActivityController(controller);
@@ -9464,7 +9462,7 @@ public final class ActivityManagerService  extends ActivityManagerNative
                 TaskRecord tr = mRecentTasks.get(i);
                 if (dumpPackage != null) {
                     if (tr.realActivity == null ||
-                            !dumpPackage.equals(tr.realActivity.getPackageName())) {
+                            !dumpPackage.equals(tr.realActivity)) {
                         continue;
                     }
                 }
@@ -12665,6 +12663,11 @@ public final class ActivityManagerService  extends ActivityManagerNative
                                      values.userSetLocale);
                 }
 
+                if (values.customTheme != null) {
+                    saveThemeResourceLocked(values.customTheme,
+                            !values.customTheme.equals(mConfiguration.customTheme));
+                }
+
                 mConfigurationSeq++;
                 if (mConfigurationSeq <= 0) {
                     mConfigurationSeq = 1;
@@ -12885,6 +12888,13 @@ public final class ActivityManagerService  extends ActivityManagerNative
             return -1;
         }
         return srec.launchedFromUid;
+    }
+
+    private void saveThemeResourceLocked(CustomTheme t, boolean isDiff){
+        if(isDiff){
+            SystemProperties.set(Configuration.THEME_ID_PERSISTENCE_PROPERTY, t.getThemeId());
+            SystemProperties.set(Configuration.THEME_PACKAGE_NAME_PERSISTENCE_PROPERTY, t.getThemePackageName());  
+        }
     }
 
     public String getLaunchedFromPackage(IBinder activityToken) {
